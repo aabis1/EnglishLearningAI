@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI English Tutor Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #6a1b9a, #9c27b0);
+        }
+        .chat-container {
+            width: 400px;
+            height: 600px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .chat-header {
+            background: #6a1b9a;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .chat-header img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .message {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .message.user {
+            justify-content: flex-end;
+        }
+        .message.bot {
+            justify-content: flex-start;
+        }
+        .message-content {
+            max-width: 60%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .message.user .message-content {
+            background: #6a1b9a;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        .message.bot .message-content {
+            background: #e0e0e0;
+            color: black;
+            border-bottom-left-radius: 5px;
+        }
+        .message img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 10px;
+        }
+        .input-container {
+            padding: 10px;
+            background: #f3f3f3;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #ddd;
+        }
+        .input-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+        .input-container button {
+            background: #6a1b9a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .input-container button:hover {
+            background: #4e1275;
+        }
+        .typing-indicator {
+            display: none;
+            text-align: left;
+            font-style: italic;
+            color: #999;
+            margin: 5px 0 0 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="your-profile-pic.png" alt="Your Profile Picture">
+            Chat with AI English Tutor
+        </div>
+        <div class="messages" id="messages"></div>
+        <div class="typing-indicator" id="typingIndicator">AI Tutor is typing...</div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message here...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById("messages");
+        const typingIndicator = document.getElementById("typingIndicator");
+
+        function addMessage(content, sender) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = "message " + sender;
+
+            const profilePic = document.createElement("img");
+            profilePic.src = sender === "user" ? "your-profile-pic.png" : "ai-profile-pic.png";
+
+            const messageContent = document.createElement("div");
+            messageContent.className = "message-content";
+            messageContent.textContent = content;
+
+            messageDiv.appendChild(sender === "user" ? messageContent : profilePic);
+            messageDiv.appendChild(sender === "user" ? profilePic : messageContent);
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById("userInput");
+            const userMessage = userInput.value.trim();
+
+            if (!userMessage) return;
+
+            // Display the user's message
+            addMessage(userMessage, "user");
+            userInput.value = "";
+
+            // Show the typing indicator
+            typingIndicator.style.display = "block";
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ message: userMessage }),
+                });
+
+                const data = await response.json();
+
+                // Hide the typing indicator
+                typingIndicator.style.display = "none";
+
+                if (data.reply) {
+                    addMessage(data.reply, "bot");
+                } else {
+                    addMessage("Error: " + (data.error || "Unknown error"), "bot");
+                }
+            } catch (error) {
+                typingIndicator.style.display = "none";
+                addMessage("Error: Unable to connect to server.", "bot");
+            }
+        }
+    </script>
+</body>
+</html>
